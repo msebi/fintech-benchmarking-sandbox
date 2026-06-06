@@ -1,0 +1,41 @@
+name: Microservices CI Pipeline
+
+# 1. THE TRIGGERS
+on:
+  push:
+    branches:
+      - 'main'
+      - '**' # Triggers on ALL branches you push to
+  pull_request:
+    branches:
+      - 'main' # Triggers when a PR targets the main branch
+
+# 2. THE JOBS
+jobs:
+  build-and-test:
+    name: Build and Test Profile Service
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Download your code into the runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Install Java 21
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin' # Eclipse Temurin is industry standard
+          cache: maven # Caches dependencies to make builds 5x faster
+
+      # Step 3: Navigate to the microservice and run tests
+      - name: Run Maven Tests
+        working-directory: ./domain-profile # Navigate into your specific component
+        run: mvn clean test
+
+      # Step 4: Ensure the application compiles into a deployable .jar
+      - name: Verify Build (Skip Tests)
+        working-directory: ./domain-profile
+        run: mvn clean package -DskipTests
+
