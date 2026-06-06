@@ -5,10 +5,10 @@ on:
   push:
     branches:
       - 'main'
-      - '**' # Triggers on ALL branches you push to
+      - '**'
   pull_request:
     branches:
-      - 'main' # Triggers when a PR targets the main branch
+      - 'main'
 
 # 2. THE JOBS
 jobs:
@@ -17,27 +17,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Download your code into the runner
+      # Step 1: Download your code into the runner (Always runs)
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Step 2: Install Java 21
+      # Step 2: Check if the profile service exists yet
+      - name: Check for Profile Service
+        id: check_files
+        run: |
+          if [ -f "domain-profile/pom.xml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Step 3: Install Java 21 (Only runs if exists was true)
       - name: Set up JDK 21
+        if: steps.check_files.outputs.exists == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'temurin' # Eclipse Temurin is industry standard
-          cache: maven # Caches dependencies to make builds 5x faster
+          distribution: 'temurin'
+          cache: maven
 
-      # Step 3: Navigate to the microservice and run tests
+      # Step 4: Navigate to the microservice and run tests
       - name: Run Maven Tests
-        if: hashFiles('domain-profile/pom.xml') != ''
-        working-directory: ./domain-profile # Navigate into your specific component
+        if: steps.check_files.outputs.exists == 'true'
+        working-directory: ./domain-profile
         run: mvn clean test
 
-      # Step 4: Ensure the application compiles into a deployable .jar
+      # Step 5: Ensure the application compiles into a deployable .jar
       - name: Verify Build (Skip Tests)
-        if: hashFiles('domain-profile/pom.xml') != ''
+        if: steps.check_files.outputs.exists == 'true'
         working-directory: ./domain-profile
         run: mvn clean package -DskipTests
-
