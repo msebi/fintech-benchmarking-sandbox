@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/profile_db
+    username: profile_user
+    password: profile_password
+  jpa:
+    hibernate:
+      ddl-auto: update # Verify/update schema
+  cloud:
+    vault:
+      host: localhost
+      port: 8200
+      scheme: http
+      authentication: TOKEN
+      token: root-token

@@ -1,0 +1,33 @@
+# domain-profile/src/main/resources/application.yml
+# Postgres holds cipher-text encrypted by vault
+server:
+  port: 8081
+
+spring:
+  application:
+    name: domain-profile
+  datasource:
+    url: jdbc:postgresql://db-profile:5432/profile_db
+    username: profile_user
+    password: profile_password
+  jpa:
+    hibernate:
+      ddl-auto: validate # Migrations handled by Flyway/Liquibase
+  cloud:
+    # Vault runs in 'data-tier' network
+    vault:
+      host: vault-spii
+      port: 8200
+      scheme: http # mTLS applies at Gateway/Mesh level
+      authentication: TOKEN
+      token: root-token
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+
+
+
+
