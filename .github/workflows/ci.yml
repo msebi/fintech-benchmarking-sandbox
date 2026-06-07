@@ -1,0 +1,53 @@
+name: Microservices CI Pipeline
+
+# 1. THE TRIGGERS
+on:
+  push:
+    branches:
+      - 'main'
+      - '**'
+  pull_request:
+    branches:
+      - 'main'
+
+# 2. THE JOBS
+jobs:
+  build-and-test:
+    name: Build and Test Profile Service
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Download your code into the runner (Always runs)
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Check if the profile service exists yet
+      - name: Check for Profile Service
+        id: check_files
+        run: |
+          if [ -f "domain-profile/pom.xml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Step 3: Install Java 21 (Only runs if exists was true)
+      - name: Set up JDK 21
+        if: steps.check_files.outputs.exists == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      # Step 4: Navigate to the microservice and run tests
+      - name: Run Maven Tests
+        if: steps.check_files.outputs.exists == 'true'
+        working-directory: ./domain-profile
+        run: mvn clean test
+
+      # Step 5: Ensure the application compiles into a deployable .jar
+      - name: Verify Build (Skip Tests)
+        if: steps.check_files.outputs.exists == 'true'
+        working-directory: ./domain-profile
+        run: mvn clean package -DskipTests
